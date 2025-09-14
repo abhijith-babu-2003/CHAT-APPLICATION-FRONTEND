@@ -27,7 +27,6 @@ const LoginPage = () => {
 
     try {
       await login(formData);
-      toast.success("Logged in successfully!");
     } catch (err) {
       toast.error(err.message || "Login failed!");
     }

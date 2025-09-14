@@ -27,7 +27,6 @@ const SignUpPage = () => {
 
     try {
       await signup(formData);
-      toast.success("Account created successfully!");
     } catch (err) {
       toast.error(err.message || "Signup failed!");
     }
