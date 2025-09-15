@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useChatStore } from "../store/useChatStore";
-import { userAuthStore } from "../store/userAuthStore";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
+import { userAuthStore } from "../store/userAuthStore";
+import { useChatStore } from "../store/useChatStore";
+
 
 function ChatContainer() {
   const {

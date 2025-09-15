@@ -1,9 +1,11 @@
+// stores/userAuthStore.js
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.VITE_API_URL
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 
 export const userAuthStore = create((set, get) => ({
   authUser: null,
@@ -81,28 +83,74 @@ export const userAuthStore = create((set, get) => ({
   },
   
   connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
+    const { authUser, socket } = get();
+    
+    if (!authUser || socket?.connected) {
+      console.log("🚫 Socket connection skipped:", { 
+        hasUser: !!authUser, 
+        isConnected: socket?.connected 
+      });
+      return;
+    }
 
-    const socket = io(BASE_URL, {
+    console.log("🔗 Connecting socket for user:", authUser._id);
+    console.log("🌐 Connecting to:", SOCKET_URL);
+
+    const newSocket = io(SOCKET_URL, {
       query: {
         userId: authUser._id,
       },
+      transports: ['websocket', 'polling'],
+      timeout: 5000,
+      forceNew: true 
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+  
+    newSocket.on('connect', () => {
+      console.log("✅ Socket connected successfully:", newSocket.id);
+      set({ socket: newSocket });
     });
 
-    socket.connect();
-    set({ socket: socket });
+ 
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Socket connection error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error type:', error.type);
+    });
 
-    socket.on("getOnlineUsers", (userIds) => {
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ Socket disconnected:', reason);
+    });
+
+
+    newSocket.on("getOnlineUsers", (userIds) => {
+      console.log("👥 Online users received:", userIds);
       set({ onlineUsers: userIds });
+    });
+
+
+    newSocket.on("newMessage", (message) => {
+      console.log("💬 New message received:", message);
+   
+    });
+
+ 
+    newSocket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`🔄 Reconnection attempt ${attemptNumber}`);
+    });
+
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log(`✅ Reconnected after ${attemptNumber} attempts`);
     });
   },
   
   disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
+    const { socket } = get();
+    if (socket?.connected) {
+      console.log("❌ Disconnecting socket");
+      socket.disconnect();
+      set({ socket: null });
+    }
   }
 }));
