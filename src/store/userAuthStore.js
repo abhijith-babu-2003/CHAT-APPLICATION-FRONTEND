@@ -92,10 +92,6 @@ export const userAuthStore = create((set, get) => ({
       });
       return;
     }
-
-    console.log("🔗 Connecting socket for user:", authUser._id);
-    console.log("🌐 Connecting to:", SOCKET_URL);
-
     const newSocket = io(SOCKET_URL, {
       query: {
         userId: authUser._id,
